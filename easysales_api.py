@@ -39,32 +39,52 @@ class EasySalesAPI:
             start = datetime.now() - timedelta(days=days_back)
             start_date = start.strftime("%Y-%m-%d")
         
-        params = {
-            "after": start_date,
-            "before": end_date
-        }
-        
-        try:
-            response = requests.get(
-                f"{self.BASE_URL}/orders",
-                params=params,
-                headers=self.headers,
-                timeout=30
-            )
-            response.raise_for_status()
-            
-            data = response.json()
-            
-            if isinstance(data, dict) and "data" in data:
-                return data["data"]
-            elif isinstance(data, list):
-                return data
-            else:
-                return []
-                
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching orders from easySales: {e}")
-            return []
+        all_orders = []
+        page = 1
+
+        while True:
+            params = {
+                "after": start_date,
+                "before": end_date,
+                "page": page
+            }
+
+            try:
+                response = requests.get(
+                    f"{self.BASE_URL}/orders",
+                    params=params,
+                    headers=self.headers,
+                    timeout=30
+                )
+                response.raise_for_status()
+
+                data = response.json()
+
+                if isinstance(data, list):
+                    all_orders.extend(data)
+                    break
+                elif isinstance(data, dict) and "data" in data:
+                    page_orders = data["data"]
+                    all_orders.extend(page_orders)
+
+                    meta = data.get("meta", {})
+                    current_page = meta.get("current_page", page)
+                    last_page = meta.get("last_page", 1)
+
+                    print(f"easySales: fetched page {current_page}/{last_page} ({len(page_orders)} orders)")
+
+                    if current_page >= last_page:
+                        break
+                    page += 1
+                else:
+                    break
+
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching orders from easySales (page {page}): {e}")
+                break
+
+        print(f"easySales: total orders fetched = {len(all_orders)}")
+        return all_orders
     
     def calculate_daily_sales(
         self, 
