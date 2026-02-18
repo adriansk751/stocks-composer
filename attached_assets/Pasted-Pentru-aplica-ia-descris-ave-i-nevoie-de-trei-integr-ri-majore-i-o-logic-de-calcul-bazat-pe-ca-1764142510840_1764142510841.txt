@@ -1,0 +1,37 @@
+Pentru aplicația descrisă aveți nevoie de trei integrări majore și o logică de calcul bazată pe **cantitatea vândută zilnic**. Iată API‑urile necesare și prompturile pe care le puteți folosi în Replit AI.
+
+### API‑urile necesare
+
+1. **SmartBill Cloud API** – pentru stocuri actuale. Endpoint-ul `GET /stocks` returnează lista produselor dintr-o gestiune cu numele, codul, unitatea de măsură și cantitatea aflată pe stoc.
+2. **easySales API** – pentru vânzări. Endpoint-ul `GET /api/v2/orders` permite filtrarea comenzilor după intervale de timp (`after`/`before`) și alte filtre. În lipsa unui endpoint oficial de vânzări în SmartBill, easySales va fi sursa principală de vânzări; opțional, puteți căuta un endpoint de facturi în SmartBill.
+3. **Google Sheets API** – pentru a prelua “bucățile pe drum” (incoming), mapate după SKU (folosind biblioteca `gspread` sau `google-api-python-client`).
+
+### Prompturi sugerate pentru Replit AI
+
+1. **Inițializare proiect**
+
+   > Creează un proiect Python organizat pe module: `smartbill_api.py` (stocuri), `easysales_api.py` (vânzări), `sheets_api.py` (incoming din Google Sheets) și `main.py` (logica principală). Include un `.env` cu cif-ul firmei, tokenul SmartBill, tokenul easySales și credentialele Google.
+
+2. **Interogarea stocurilor din SmartBill**
+
+   > În modulul `smartbill_api.py`, definește funcția `get_stock(cif, date, warehouse_name)` care apelează `GET https://ws.smartbill.ro/SBORO/api/stocks` cu parametrii `cif`, `date` și `warehouseName`. Parsează răspunsul JSON pentru a obține, pe fiecare produs, `productCode`, `productName`, `measuringUnit` și `quantity`, conform documentației SmartBill.
+
+3. **Preluarea vânzărilor din easySales**
+
+   > În `easysales_api.py`, construiește funcția `get_sales(start_date, end_date)` care trimite un request `GET` la `https://app.easysales.ro/api/v2/orders`, cu antet Bearer token. Utilizează parametrii `after` și `before` pentru a selecta comenzile din ultimele 30/60/90 zile. Parcurge comenzile și calculează **cantitatea vândută zilnic** pe fiecare SKU (număr de unități per zi) – împarte cantitatea totală vândută la numărul de zile din interval.
+
+4. **Citirea incoming‑ului din Google Sheets**
+
+   > În `sheets_api.py`, folosește `gspread` pentru a deschide un sheet indicat de `sheet_id` și `worksheet_name`. Creează funcția `get_incoming_quantities()` care citește coloanele `SKU` și `Incoming` și returnează un dicționar `{sku: incoming_quantity}`.
+
+5. **Calculul necesarului pe baza vânzărilor zilnice**
+
+   > În `main.py`, creează un endpoint `/forecast` sau o funcție care primește: `warehouse_name`, `source` (easysales sau smartbill), `days_interval` (30, 60, 90) și lista de luni pentru prognoză (3, 4, 5, 6, 9). Apelează `get_stock` pentru stoc, `get_sales` pentru vânzări și `get_incoming_quantities` pentru incoming. Calculează **media zilnică a vânzărilor** pe SKU (total vândut ÷ număr zile). Pentru fiecare SKU și pentru fiecare orizont de timp, determină necesarul folosind formula:
+   >
+   > [
+   > \text{necesar} = (\text{vânzări zilnice} \times \text{numărul de zile dorit}) - \text{stoc curent} + \text{incoming}
+   > ]
+   >
+   > Astfel, pentru 3, 4, 5, 6 și 9 luni (presupunând că o lună ≈ 30 zile) folosește 90, 120, 150, 180 și 270 de zile. Afișează rezultatul într‑un tabel JSON sau CSV cu câmpurile: SKU, stoc actual, incoming, vânzări zilnice și necesarul pentru fiecare perioadă.
+
+Aceste prompturi îi transmit clar lui Replit AI ce să construiască și indică exact ce API‑uri trebuie accesate pentru a obține datele necesare.

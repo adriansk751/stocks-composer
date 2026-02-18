@@ -1,0 +1,139 @@
+I need you to fully generate and fix my Streamlit app with the following complete requirements.
+Please rewrite the entire app from scratch, including correct deployment configuration for Replit.
+Follow every instruction carefully:
+
+1. FIX ALL REPLIT DEPLOYMENT ISSUES
+
+Make the Streamlit app run correctly on Replit Deployments:
+
+A. Host & Port
+
+Streamlit must run on host 0.0.0.0
+
+Must use the dynamic Replit port:
+
+import os
+port = int(os.getenv("PORT", 8501))
+
+
+Launch Streamlit with:
+
+streamlit run app.py --server.address=0.0.0.0 --server.port=$PORT
+
+B. No hardcoded ports
+
+Remove port 5000 or any fixed port.
+
+The app must respond on the PORT environment variable.
+
+C. Startup time
+
+Optimize so the port binds quickly:
+
+lazy imports
+
+use @st.cache_data where needed
+
+no API calls on load (only on button press)
+
+D. Provide full files
+
+Generate:
+
+app.py
+
+requirements.txt
+
+.replit or replit.nix with correct run command
+
+2. BUSINESS LOGIC REQUIREMENTS
+
+The app must import two types of data:
+
+A. STOCK VALUE (SMARTBILL ONLY)
+
+This MUST come exclusively from SmartBill, from the Gestiune: StocCV.
+
+Create function:
+
+get_stock_value_from_smartbill()
+
+
+Inputs needed:
+
+SmartBill API key
+
+Company VAT (CIF)
+
+Gestiune = "StocCV"
+
+Display results clearly.
+
+B. SALES DATA (CHOICE OF SOURCE)
+
+Sales can come from:
+
+EasySale, OR
+
+SmartBill
+
+Create two functions:
+
+get_sales_from_easysale()
+get_sales_from_smartbill()
+
+
+The UI must include a dropdown:
+
+EasySale
+
+SmartBill
+
+User presses a button to import sales.
+
+3. UI REQUIREMENTS
+
+Streamlit interface must include:
+
+Input for SmartBill API key
+
+Input for EasySale API key
+
+Input for Company VAT (CIF)
+
+Button for importing Stock Value
+
+Dropdown for selecting sales source
+
+Button for importing Sales
+
+Pretty JSON output (or table if appropriate)
+
+4. ERROR HANDLING
+
+Every API request must have:
+
+try/except
+
+user-friendly error message
+
+visible JSON if API returns error
+
+5. WHAT TO RETURN
+
+You must output:
+
+A. Complete app.py (full working code)
+B. requirements.txt containing:
+
+streamlit
+
+requests
+
+C. .replit or replit.nix with correct run command
+
+This must run Streamlit correctly on 0.0.0.0 and dynamic port.
+
+D. Absolutely no placeholders like “your code goes here” — write the full implementation.
+
+Generate the final
