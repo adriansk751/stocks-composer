@@ -60,6 +60,13 @@ class EasySalesAPI:
 
                 data = response.json()
 
+                if page == 1:
+                    import json
+                    keys = list(data.keys()) if isinstance(data, dict) else "list"
+                    meta_raw = data.get("meta") if isinstance(data, dict) else None
+                    print(f"[DEBUG easySales] Response top-level keys: {keys}")
+                    print(f"[DEBUG easySales] meta structure: {json.dumps(meta_raw, indent=2) if meta_raw else 'no meta key'}")
+
                 if isinstance(data, list):
                     all_orders.extend(data)
                     break
