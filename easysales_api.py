@@ -60,13 +60,6 @@ class EasySalesAPI:
 
                 data = response.json()
 
-                if page == 1:
-                    import json
-                    keys = list(data.keys()) if isinstance(data, dict) else "list"
-                    meta_raw = data.get("meta") if isinstance(data, dict) else None
-                    print(f"[DEBUG easySales] Response top-level keys: {keys}")
-                    print(f"[DEBUG easySales] meta structure: {json.dumps(meta_raw, indent=2) if meta_raw else 'no meta key'}")
-
                 if isinstance(data, list):
                     all_orders.extend(data)
                     break
@@ -75,12 +68,11 @@ class EasySalesAPI:
                     all_orders.extend(page_orders)
 
                     meta = data.get("meta", {})
-                    current_page = meta.get("current_page", page)
-                    last_page = meta.get("last_page", 1)
+                    per_page = meta.get("per_page", len(page_orders))
 
-                    print(f"easySales: fetched page {current_page}/{last_page} ({len(page_orders)} orders)")
+                    print(f"easySales: fetched page {page} ({len(page_orders)} orders)")
 
-                    if current_page >= last_page:
+                    if len(page_orders) < per_page:
                         break
                     page += 1
                 else:
