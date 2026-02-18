@@ -1,9 +1,12 @@
+import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Dict, Optional
 import os
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 class EmailAlertSystem:
@@ -48,7 +51,7 @@ class EmailAlertSystem:
             True if successful, False otherwise
         """
         if not all([self.smtp_server, self.smtp_user, self.smtp_password]):
-            print("Email configuration incomplete. Cannot send alert.")
+            logger.warning("Email configuration incomplete. Cannot send alert.")
             return False
         
         try:
@@ -70,7 +73,7 @@ class EmailAlertSystem:
             return True
         
         except Exception as e:
-            print(f"Error sending email: {e}")
+            logger.error(f"Error sending email: {e}")
             return False
     
     def send_low_stock_alert(

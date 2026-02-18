@@ -1,7 +1,10 @@
+import logging
 import requests
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import os
+
+logger = logging.getLogger(__name__)
 
 
 class SmartBillAPI:
@@ -64,7 +67,7 @@ class SmartBillAPI:
                 return []
                 
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching stock from SmartBill: {e}")
+            logger.error(f"Error fetching stock from SmartBill: {e}")
             return []
     
     def parse_stock_data(self, stock_data: List[Dict]) -> Dict[str, Dict]:
@@ -134,7 +137,7 @@ class SmartBillAPI:
                 return []
                 
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching invoices from SmartBill: {e}")
+            logger.error(f"Error fetching invoices from SmartBill: {e}")
             return []
     
     def calculate_daily_sales_from_invoices(

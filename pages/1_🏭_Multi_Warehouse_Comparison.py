@@ -47,7 +47,7 @@ safety_stock_percentage = st.sidebar.slider(
     "Safety Stock Buffer (%)",
     min_value=0,
     max_value=100,
-    value=20,
+    value=InventoryForecast.DEFAULT_SAFETY_STOCK_PERCENTAGE,
     step=5
 )
 

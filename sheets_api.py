@@ -1,8 +1,11 @@
+import logging
 import gspread
 from google.oauth2.service_account import Credentials
 from typing import Dict, Optional
 import os
 import json
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleSheetsAPI:
@@ -69,7 +72,7 @@ class GoogleSheetsAPI:
             return incoming_data
             
         except Exception as e:
-            print(f"Error reading from Google Sheets: {e}")
+            logger.error(f"Error reading from Google Sheets: {e}")
             return {}
 
 
@@ -92,5 +95,5 @@ def get_sheets_client() -> Optional[GoogleSheetsAPI]:
             credentials_json=creds_json
         )
     except Exception as e:
-        print(f"Error creating Google Sheets client: {e}")
+        logger.error(f"Error creating Google Sheets client: {e}")
         return None

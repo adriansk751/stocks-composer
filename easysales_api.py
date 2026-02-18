@@ -1,7 +1,10 @@
+import logging
 import requests
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import os
+
+logger = logging.getLogger(__name__)
 
 
 class EasySalesAPI:
@@ -70,7 +73,7 @@ class EasySalesAPI:
                     meta = data.get("meta", {})
                     per_page = meta.get("per_page", len(page_orders))
 
-                    print(f"easySales: fetched page {page} ({len(page_orders)} orders)")
+                    logger.info(f"easySales: fetched page {page} ({len(page_orders)} orders)")
 
                     if len(page_orders) < per_page:
                         break
@@ -79,10 +82,10 @@ class EasySalesAPI:
                     break
 
             except requests.exceptions.RequestException as e:
-                print(f"Error fetching orders from easySales (page {page}): {e}")
+                logger.error(f"Error fetching orders from easySales (page {page}): {e}")
                 break
 
-        print(f"easySales: total orders fetched = {len(all_orders)}")
+        logger.info(f"easySales: total orders fetched = {len(all_orders)}")
         return all_orders
     
     def calculate_daily_sales(
@@ -150,7 +153,7 @@ class EasySalesAPI:
             end_date = datetime.now().strftime("%Y-%m-%d")
         
         if not start_date:
-            start = datetime.now() - timedelta(days=days_back - 1)
+            start = datetime.now() - timedelta(days=days_back)
             start_date = start.strftime("%Y-%m-%d")
         
         orders = self.get_orders(start_date, end_date, days_back)

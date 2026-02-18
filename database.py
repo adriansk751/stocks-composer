@@ -3,8 +3,6 @@ from psycopg2.extras import RealDictCursor
 import os
 from datetime import datetime
 from typing import Dict, List, Optional
-import json
-
 
 def get_db_connection():
     """Create a database connection using environment variables."""
@@ -258,27 +256,3 @@ def get_sku_history(sku: str, limit: int = 10) -> List[Dict]:
     conn.close()
     
     return [dict(row) for row in history]
-
-
-def delete_old_forecasts(days_to_keep: int = 90):
-    """
-    Delete forecast runs older than specified days.
-    
-    Args:
-        days_to_keep: Number of days of history to retain
-    """
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    cur.execute("""
-        DELETE FROM forecast_runs
-        WHERE run_date < NOW() - INTERVAL '%s days'
-    """, (days_to_keep,))
-    
-    deleted = cur.rowcount
-    
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-    return deleted

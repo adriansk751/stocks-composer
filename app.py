@@ -1,3 +1,4 @@
+import logging
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
@@ -26,12 +27,8 @@ def get_database_functions():
         init_database()
         return save_forecast_run, save_forecast_details, get_forecast_history, get_forecast_details, get_sku_history, True
     except Exception as e:
-        print(f"Database not available: {e}")
+        logging.error(f"Database not available: {e}")
         return None, None, None, None, None, False
-
-def get_db_status():
-    """Check if database is available without initializing"""
-    return all([os.getenv("PGHOST"), os.getenv("PGDATABASE"), os.getenv("PGUSER")])
 
 st.set_page_config(
     page_title="Inventory Forecast System",
@@ -116,7 +113,7 @@ safety_stock_percentage = st.sidebar.slider(
     "Safety Stock Buffer (%)",
     min_value=0,
     max_value=100,
-    value=20,
+    value=InventoryForecast.DEFAULT_SAFETY_STOCK_PERCENTAGE,
     step=5,
     help="Additional buffer percentage to add to forecast requirements"
 )
@@ -235,11 +232,11 @@ if st.sidebar.button("🔄 Run Forecast", type="primary", use_container_width=Tr
         
         df_filtered = InventoryForecast.filter_active_products(df_forecast, min_daily_sales)
         
-        if get_db_status():
+        db_save_run, db_save_details, _, _, _, db_ok = get_database_functions()
+        if db_ok:
             with st.spinner("Saving forecast to database..."):
                 try:
-                    db_save_run, db_save_details, _, _, _, db_ok = get_database_functions()
-                    if db_ok and db_save_run and db_save_details:
+                    if db_save_run and db_save_details:
                         run_id = db_save_run(
                             data_source=data_source,
                             start_date=start_date_str,
@@ -391,7 +388,8 @@ if 'forecast_data' in st.session_state:
     with tab4:
         st.subheader("Historical Trends & Forecast Accuracy")
         
-        if not get_db_status():
+        _, _, db_get_history, _, db_get_sku_history, db_ok = get_database_functions()
+        if not db_ok:
             st.info("📊 Historical tracking requires database configuration. Set up PostgreSQL credentials to enable this feature.")
             st.markdown("""
             **Required Environment Variables:**
@@ -403,8 +401,7 @@ if 'forecast_data' in st.session_state:
             """)
         else:
             try:
-                _, _, db_get_history, _, db_get_sku_history, db_ok = get_database_functions()
-                history = db_get_history(limit=20) if db_ok and db_get_history else []
+                history = db_get_history(limit=20) if db_get_history else []
             
                 if history:
                     st.markdown("#### Recent Forecast Runs")
