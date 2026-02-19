@@ -49,6 +49,18 @@ data_source = st.sidebar.radio(
     help="Select the source for sales/orders data. Stock is always from SmartBill."
 )
 
+if data_source == "easySales":
+    easysales_max_pages = st.sidebar.number_input(
+        "easySales Max Pages",
+        min_value=1,
+        max_value=100,
+        value=10,
+        step=1,
+        help="Maximum number of order pages to fetch from easySales"
+    )
+else:
+    easysales_max_pages = 10
+
 st.sidebar.subheader("Date Range")
 
 use_custom_dates = st.sidebar.checkbox("Use Custom Date Range", value=False)
@@ -188,7 +200,8 @@ if st.sidebar.button("🔄 Run Forecast", type="primary", use_container_width=Tr
                     sales_data = easysales_client.get_sales_data(
                         start_date=start_date_str,
                         end_date=end_date_str,
-                        days_back=days_interval
+                        days_back=days_interval,
+                        max_pages=easysales_max_pages
                     )
                     st.success(f"✓ Analyzed {len(sales_data)} products from easySales orders")
             else:

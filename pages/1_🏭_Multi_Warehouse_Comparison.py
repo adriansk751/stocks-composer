@@ -31,6 +31,18 @@ data_source = st.sidebar.radio(
     help="Select the source for sales data"
 )
 
+if data_source == "easySales":
+    easysales_max_pages = st.sidebar.number_input(
+        "easySales Max Pages",
+        min_value=1,
+        max_value=100,
+        value=10,
+        step=1,
+        help="Maximum number of order pages to fetch from easySales"
+    )
+else:
+    easysales_max_pages = 10
+
 days_interval = st.sidebar.selectbox(
     "Analysis Period (days)",
     [30, 60, 90],
@@ -108,7 +120,8 @@ if st.sidebar.button("🔄 Compare Warehouses", type="primary", use_container_wi
                     sales_data = easysales_client.get_sales_data(
                         start_date=start_date_str,
                         end_date=end_date_str,
-                        days_back=days_interval
+                        days_back=days_interval,
+                        max_pages=easysales_max_pages
                     )
                 elif data_source == "SmartBill" and smartbill_client:
                     sales_data = smartbill_client.get_sales_data(

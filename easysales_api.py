@@ -19,33 +19,34 @@ class EasySalesAPI:
         }
     
     def get_orders(
-        self, 
+        self,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        days_back: int = 30
+        days_back: int = 30,
+        max_pages: int = 10
     ) -> List[Dict]:
         """
         Retrieve orders from easySales API.
-        
+
         Args:
             start_date: Start date in YYYY-MM-DD format
             end_date: End date in YYYY-MM-DD format
             days_back: Number of days to look back if dates not provided
-        
+            max_pages: Maximum number of pages to fetch
+
         Returns:
             List of orders
         """
         if not end_date:
             end_date = datetime.now().strftime("%Y-%m-%d")
-        
+
         if not start_date:
             start = datetime.now() - timedelta(days=days_back)
             start_date = start.strftime("%Y-%m-%d")
-        
-        all_orders = []
-        page = 1
 
-        while True:
+        all_orders = []
+
+        for page in range(1, max_pages + 1):
             params = {
                 "after": start_date,
                 "before": end_date,
@@ -73,11 +74,10 @@ class EasySalesAPI:
                     meta = data.get("meta", {})
                     per_page = meta.get("per_page", len(page_orders))
 
-                    logger.info(f"easySales: fetched page {page} ({len(page_orders)} orders)")
+                    logger.info(f"easySales: fetched page {page}/{max_pages} ({len(page_orders)} orders)")
 
                     if len(page_orders) < per_page:
                         break
-                    page += 1
                 else:
                     break
 
@@ -136,27 +136,29 @@ class EasySalesAPI:
         self,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        days_back: int = 30
+        days_back: int = 30,
+        max_pages: int = 10
     ) -> Dict[str, Dict]:
         """
         Get processed sales data with daily velocity calculations.
-        
+
         Args:
             start_date: Start date in YYYY-MM-DD format
-            end_date: End date in YYYY-MM-DD format  
+            end_date: End date in YYYY-MM-DD format
             days_back: Number of days in the period (used for daily sales calculation)
-        
+            max_pages: Maximum number of pages to fetch from the API
+
         Returns:
             Dictionary mapping SKU to sales metrics
         """
         if not end_date:
             end_date = datetime.now().strftime("%Y-%m-%d")
-        
+
         if not start_date:
             start = datetime.now() - timedelta(days=days_back)
             start_date = start.strftime("%Y-%m-%d")
-        
-        orders = self.get_orders(start_date, end_date, days_back)
+
+        orders = self.get_orders(start_date, end_date, days_back, max_pages)
         
         if start_date and end_date:
             start_dt = datetime.strptime(start_date, "%Y-%m-%d")
