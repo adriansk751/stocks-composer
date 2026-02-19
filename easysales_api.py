@@ -76,7 +76,7 @@ class EasySalesAPI:
 
                     logger.info(f"easySales: fetched page {page}/{max_pages} ({len(page_orders)} orders)")
 
-                    if len(page_orders) < per_page:
+                    if len(page_orders) == 0:
                         break
                 else:
                     break
