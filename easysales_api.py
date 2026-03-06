@@ -98,6 +98,20 @@ class EasySalesAPI:
                 break
 
         logger.info(f"easySales: total orders fetched = {len(all_orders)}")
+
+        if all_orders:
+            date_fields = ["date", "created_at", "order_date", "dateCreated", "data"]
+            order_dates = []
+            for order in all_orders:
+                for field in date_fields:
+                    val = order.get(field)
+                    if val:
+                        order_dates.append(str(val)[:10])
+                        break
+            if order_dates:
+                order_dates.sort()
+                logger.info(f"easySales: actual order date range = {order_dates[0]} → {order_dates[-1]} (requested: {start_date} → {end_date})")
+
         return all_orders
     
     def calculate_daily_sales(
