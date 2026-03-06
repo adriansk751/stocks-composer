@@ -58,8 +58,14 @@ if data_source == "easySales":
         step=1,
         help="Maximum number of order pages to fetch from easySales"
     )
+    easysales_status = st.sidebar.text_input(
+        "Order Status Filter",
+        value="",
+        help="Only count orders with this status (e.g. finalizata). Leave empty to include all."
+    ).strip() or None
 else:
     easysales_max_pages = 10
+    easysales_status = None
 
 st.sidebar.subheader("Date Range")
 
@@ -201,7 +207,8 @@ if st.sidebar.button("🔄 Run Forecast", type="primary", use_container_width=Tr
                         start_date=start_date_str,
                         end_date=end_date_str,
                         days_back=days_interval,
-                        max_pages=easysales_max_pages
+                        max_pages=easysales_max_pages,
+                        order_status=easysales_status
                     )
                     st.success(f"✓ Analyzed {len(sales_data)} products from easySales orders")
             else:

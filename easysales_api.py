@@ -23,7 +23,8 @@ class EasySalesAPI:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         days_back: int = 30,
-        max_pages: int = 10
+        max_pages: int = 10,
+        order_status: Optional[str] = None
     ) -> List[Dict]:
         """
         Retrieve orders from easySales API.
@@ -33,6 +34,7 @@ class EasySalesAPI:
             end_date: End date in YYYY-MM-DD format
             days_back: Number of days to look back if dates not provided
             max_pages: Maximum number of pages to fetch
+            order_status: Only fetch orders with this status (e.g. "finalizata")
 
         Returns:
             List of orders
@@ -45,6 +47,7 @@ class EasySalesAPI:
             start_date = start.strftime("%Y-%m-%d")
 
         all_orders = []
+        seen_ids = set()
 
         for page in range(1, max_pages + 1):
             params = {
@@ -52,6 +55,8 @@ class EasySalesAPI:
                 "before": end_date,
                 "page": page
             }
+            if order_status:
+                params["status"] = order_status
 
             try:
                 response = requests.get(
@@ -65,16 +70,27 @@ class EasySalesAPI:
                 data = response.json()
 
                 if isinstance(data, list):
-                    all_orders.extend(data)
+                    for order in data:
+                        order_id = order.get("id")
+                        if order_id is None or order_id not in seen_ids:
+                            if order_id is not None:
+                                seen_ids.add(order_id)
+                            all_orders.append(order)
                     break
                 elif isinstance(data, dict) and "data" in data:
                     page_orders = data["data"]
-                    all_orders.extend(page_orders)
 
-                    meta = data.get("meta", {})
-                    per_page = meta.get("per_page", len(page_orders))
+                    new_orders = []
+                    for order in page_orders:
+                        order_id = order.get("id")
+                        if order_id is None or order_id not in seen_ids:
+                            if order_id is not None:
+                                seen_ids.add(order_id)
+                            new_orders.append(order)
 
-                    logger.info(f"easySales: fetched page {page}/{max_pages} ({len(page_orders)} orders)")
+                    all_orders.extend(new_orders)
+
+                    logger.info(f"easySales: fetched page {page}/{max_pages} ({len(new_orders)} new orders, {len(page_orders) - len(new_orders)} duplicates skipped)")
 
                     if len(page_orders) == 0:
                         break
@@ -137,7 +153,8 @@ class EasySalesAPI:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         days_back: int = 30,
-        max_pages: int = 10
+        max_pages: int = 10,
+        order_status: Optional[str] = None
     ) -> Dict[str, Dict]:
         """
         Get processed sales data with daily velocity calculations.
@@ -147,6 +164,7 @@ class EasySalesAPI:
             end_date: End date in YYYY-MM-DD format
             days_back: Number of days in the period (used for daily sales calculation)
             max_pages: Maximum number of pages to fetch from the API
+            order_status: Only count orders with this status (e.g. "finalizata")
 
         Returns:
             Dictionary mapping SKU to sales metrics
@@ -158,15 +176,16 @@ class EasySalesAPI:
             start = datetime.now() - timedelta(days=days_back)
             start_date = start.strftime("%Y-%m-%d")
 
-        orders = self.get_orders(start_date, end_date, days_back, max_pages)
-        
+        orders = self.get_orders(start_date, end_date, days_back, max_pages, order_status)
+
         if start_date and end_date:
             start_dt = datetime.strptime(start_date, "%Y-%m-%d")
             end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-            actual_days = max((end_dt - start_dt).days + 1, 1)
+            # "after" is exclusive in the API, so actual range is end - start (not +1)
+            actual_days = max((end_dt - start_dt).days, 1)
         else:
             actual_days = days_back
-        
+
         return self.calculate_daily_sales(orders, actual_days)
 
 
