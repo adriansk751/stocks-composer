@@ -40,14 +40,8 @@ if data_source == "easySales":
         step=1,
         help="Maximum number of order pages to fetch from easySales"
     )
-    easysales_status = st.sidebar.text_input(
-        "Order Status Filter",
-        value="",
-        help="Only count orders with this status (e.g. finalizata). Leave empty to include all."
-    ).strip() or None
 else:
     easysales_max_pages = 10
-    easysales_status = None
 
 days_interval = st.sidebar.selectbox(
     "Analysis Period (days)",
@@ -127,8 +121,7 @@ if st.sidebar.button("🔄 Compare Warehouses", type="primary", use_container_wi
                         start_date=start_date_str,
                         end_date=end_date_str,
                         days_back=days_interval,
-                        max_pages=easysales_max_pages,
-                        order_status=easysales_status
+                        max_pages=easysales_max_pages
                     )
                 elif data_source == "SmartBill" and smartbill_client:
                     sales_data = smartbill_client.get_sales_data(

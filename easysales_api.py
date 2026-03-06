@@ -23,8 +23,7 @@ class EasySalesAPI:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         days_back: int = 30,
-        max_pages: int = 10,
-        order_status: Optional[str] = None
+        max_pages: int = 10
     ) -> List[Dict]:
         """
         Retrieve orders from easySales API.
@@ -34,7 +33,6 @@ class EasySalesAPI:
             end_date: End date in YYYY-MM-DD format
             days_back: Number of days to look back if dates not provided
             max_pages: Maximum number of pages to fetch
-            order_status: Only fetch orders with this status (e.g. "finalizata")
 
         Returns:
             List of orders
@@ -55,8 +53,6 @@ class EasySalesAPI:
                 "before": end_date,
                 "page": page
             }
-            if order_status:
-                params["status"] = order_status
 
             try:
                 response = requests.get(
@@ -153,8 +149,7 @@ class EasySalesAPI:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         days_back: int = 30,
-        max_pages: int = 10,
-        order_status: Optional[str] = None
+        max_pages: int = 10
     ) -> Dict[str, Dict]:
         """
         Get processed sales data with daily velocity calculations.
@@ -164,7 +159,6 @@ class EasySalesAPI:
             end_date: End date in YYYY-MM-DD format
             days_back: Number of days in the period (used for daily sales calculation)
             max_pages: Maximum number of pages to fetch from the API
-            order_status: Only count orders with this status (e.g. "finalizata")
 
         Returns:
             Dictionary mapping SKU to sales metrics
@@ -176,7 +170,7 @@ class EasySalesAPI:
             start = datetime.now() - timedelta(days=days_back)
             start_date = start.strftime("%Y-%m-%d")
 
-        orders = self.get_orders(start_date, end_date, days_back, max_pages, order_status)
+        orders = self.get_orders(start_date, end_date, days_back, max_pages)
 
         if start_date and end_date:
             start_dt = datetime.strptime(start_date, "%Y-%m-%d")
