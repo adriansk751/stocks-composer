@@ -115,47 +115,51 @@ class EasySalesAPI:
         return all_orders
     
     def calculate_daily_sales(
-        self, 
-        orders: List[Dict], 
+        self,
+        orders: List[Dict],
         days_in_period: int
     ) -> Dict[str, Dict]:
         """
         Calculate daily sales velocity per SKU from orders.
-        
+
         Args:
             orders: List of orders from API
             days_in_period: Number of days in the analysis period
-        
+
         Returns:
             Dictionary mapping SKU to sales metrics
         """
         sales_by_sku = {}
-        
+
         for order in orders:
+            order_id = order.get("id")
             items = order.get("items") or order.get("products") or []
-            
+
             for item in items:
                 sku = item.get("sku") or item.get("code") or item.get("product_code")
                 quantity = float(item.get("quantity", 0))
-                
+
                 if sku and quantity > 0:
                     if sku not in sales_by_sku:
                         sales_by_sku[sku] = {
                             "sku": sku,
                             "name": item.get("name") or item.get("product_name", ""),
                             "total_quantity": 0,
-                            "order_count": 0
+                            "order_ids": set(),
                         }
-                    
+
                     sales_by_sku[sku]["total_quantity"] += quantity
-                    sales_by_sku[sku]["order_count"] += 1
-        
+                    if order_id is not None:
+                        sales_by_sku[sku]["order_ids"].add(order_id)
+
         for sku, data in sales_by_sku.items():
+            data["days_in_period"] = days_in_period
+            data["order_count"] = len(data.pop("order_ids"))
             if days_in_period > 0:
                 data["daily_sales"] = data["total_quantity"] / days_in_period
             else:
                 data["daily_sales"] = 0
-        
+
         return sales_by_sku
     
     def get_sales_data(

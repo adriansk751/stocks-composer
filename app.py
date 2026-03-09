@@ -270,6 +270,7 @@ if st.sidebar.button("🔄 Run Forecast", type="primary", use_container_width=Tr
         
         st.session_state['forecast_data'] = df_filtered
         st.session_state['full_forecast_data'] = df_forecast
+        st.session_state['sales_data_raw'] = sales_data
         st.session_state['last_update'] = datetime.now()
         st.session_state['current_config'] = {
             'data_source': data_source,
@@ -298,7 +299,7 @@ if 'forecast_data' in st.session_state:
     
     st.markdown("---")
     
-    tab1, tab2, tab3, tab4 = st.tabs(["📊 Full Forecast", "🔴 Critical Items", "📈 Statistics", "📜 History & Trends"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 Full Forecast", "🔴 Critical Items", "📈 Statistics", "📜 History & Trends", "🔍 Sales Audit"])
     
     with tab1:
         st.subheader("Complete Forecast Results")
@@ -465,6 +466,51 @@ if 'forecast_data' in st.session_state:
             
             except Exception as e:
                 st.error(f"Error loading historical data: {e}")
+
+    with tab5:
+        st.subheader("Daily Sales Calculation Audit")
+
+        raw = st.session_state.get('sales_data_raw', {})
+        cfg = st.session_state.get('current_config', {})
+
+        if not raw:
+            st.info("No sales data available. Run a forecast first.")
+        else:
+            days = cfg.get('days_interval', '?')
+            st.markdown(
+                f"**{len(raw)} SKUs** · period **{cfg.get('start_date')} → {cfg.get('end_date')}** · **{days} days** · source **{cfg.get('data_source')}**"
+            )
+
+            rows = []
+            for sku, d in raw.items():
+                qty = d.get("total_quantity", 0)
+                dp  = d.get("days_in_period", days)
+                rows.append({
+                    "SKU":              sku,
+                    "Product Name":     d.get("name", ""),
+                    "Orders":           d.get("order_count", "?"),
+                    "Total Qty Sold":   round(qty, 4),
+                    "÷ Days":           dp,
+                    "= Daily Sales":    round(d.get("daily_sales", 0), 6),
+                })
+
+            audit_df = pd.DataFrame(rows).sort_values("Total Qty Sold", ascending=False)
+
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total SKUs", len(audit_df))
+            col2.metric("Total Units Sold", f"{audit_df['Total Qty Sold'].sum():,.0f}")
+            col3.metric("Total Orders (unique)", f"{audit_df['Orders'].sum():,.0f}")
+
+            st.markdown("---")
+            st.dataframe(audit_df, use_container_width=True, height=500)
+
+            csv = audit_df.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="📥 Download Audit CSV",
+                data=csv,
+                file_name=f"sales_audit_{cfg.get('start_date')}_{cfg.get('end_date')}.csv",
+                mime="text/csv"
+            )
 
 else:
     st.info("👈 Configure settings in the sidebar and click 'Run Forecast' to begin")

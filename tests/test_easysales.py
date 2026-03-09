@@ -13,14 +13,16 @@ def make_client():
 def test_daily_sales_basic_aggregation():
     client = make_client()
     orders = [
-        {"items": [{"sku": "ABC", "quantity": 10, "name": "Product A"}]},
-        {"items": [{"sku": "ABC", "quantity": 20, "name": "Product A"}]},
+        {"id": 1, "items": [{"sku": "ABC", "quantity": 10, "name": "Product A"}]},
+        {"id": 2, "items": [{"sku": "ABC", "quantity": 20, "name": "Product A"}]},
     ]
     result = client.calculate_daily_sales(orders, days_in_period=30)
 
     assert "ABC" in result
     assert result["ABC"]["total_quantity"] == 30
-    assert result["ABC"]["daily_sales"] == 1.0  # 30 / 30
+    assert result["ABC"]["daily_sales"] == 1.0   # 30 / 30
+    assert result["ABC"]["order_count"] == 2     # 2 unique orders
+    assert result["ABC"]["days_in_period"] == 30
 
 
 def test_daily_sales_multiple_skus():
@@ -78,6 +80,21 @@ def test_daily_sales_empty_orders():
     client = make_client()
     result = client.calculate_daily_sales([], days_in_period=30)
     assert result == {}
+
+
+def test_order_count_counts_unique_orders_not_line_items():
+    """One order with SKU appearing twice → order_count = 1, not 2."""
+    client = make_client()
+    orders = [
+        {"id": 99, "items": [
+            {"sku": "ABC", "quantity": 5, "name": "A"},
+            {"sku": "ABC", "quantity": 5, "name": "A"},  # same SKU, same order
+        ]},
+    ]
+    result = client.calculate_daily_sales(orders, days_in_period=10)
+
+    assert result["ABC"]["total_quantity"] == 10
+    assert result["ABC"]["order_count"] == 1   # one unique order, not two line items
 
 
 def test_daily_sales_falls_back_to_products_key():
